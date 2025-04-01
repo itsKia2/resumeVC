@@ -23,5 +23,16 @@ dist-ssr
 *.sln
 *.sw?
 
-.venv
-__pycache__
+# UV / Python
+.python-version
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+.envrc
+.lock-wheels
+.lock-recipe
+.lock
+uv.lock
