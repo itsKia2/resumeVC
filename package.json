@@ -1,0 +1,20 @@
+{
+    "name": "resumevc-monorepo",
+    "private": true,
+    "version": "0.1.0",
+    "description": "ResumeVC application with React frontend and Flask backend",
+    "scripts": {
+      "frontend:dev": "cd frontend && bun run dev",
+      "frontend:build": "cd frontend && bun run build",
+      "frontend:install": "cd frontend && bun install",
+      "backend:dev": "cd backend && uv run flask --app app run --debug",
+      "backend:build": "cd backend && uv sync --no-deps",
+      "dev": "concurrently \"bun run frontend:dev\" \"bun run backend:dev\"",
+      "build": "bun run frontend:build && bun run backend:build",
+      "postinstall": "bun run frontend:install",
+      "clean": "rm -rf frontend/dist frontend/node_modules"
+    },
+    "devDependencies": {
+      "concurrently": "^8.2.2"
+    }
+  }
