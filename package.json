@@ -2,17 +2,17 @@
     "name": "resumevc-monorepo",
     "private": true,
     "version": "0.1.0",
-    "description": "ResumeVC application with React frontend and Flask backend",
+    "description": "ResumeVC application with React client and Flask server",
     "scripts": {
-      "frontend:dev": "cd frontend && bun run dev",
-      "frontend:build": "cd frontend && bun run build",
-      "frontend:install": "cd frontend && bun install",
-      "backend:dev": "cd backend && uv run flask --app app run --debug",
-      "backend:build": "cd backend && uv sync --no-deps",
-      "dev": "concurrently \"bun run frontend:dev\" \"bun run backend:dev\"",
-      "build": "bun run frontend:build && bun run backend:build",
-      "postinstall": "bun run frontend:install",
-      "clean": "rm -rf frontend/dist frontend/node_modules"
+      "client:dev": "cd client && bun run dev",
+      "client:build": "cd client && bun run build",
+      "client:install": "cd client && bun install",
+      "server:dev": "cd server && uv run flask --app app run --debug",
+      "server:build": "cd server && uv sync --no-deps",
+      "dev": "concurrently \"bun run client:dev\" \"bun run server:dev\"",
+      "build": "bun run client:build && bun run server:build",
+      "postinstall": "bun run client:install",
+      "clean": "rm -rf client/dist client/node_modules"
     },
     "devDependencies": {
       "concurrently": "^8.2.2"
