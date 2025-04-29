@@ -1,0 +1,10 @@
+{
+    "name": "resumevc-server",
+    "private": true,
+    "version": "0.0.0",
+    "description": "ResumeVC Flask server",
+    "scripts": {
+      "dev": "uv run flask --app app run --debug",
+      "build": "uv sync --no-deps"
+    }
+}
