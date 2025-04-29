@@ -5,7 +5,7 @@
     "description": "ResumeVC Flask server",
     "scripts": {
       "dev": "uv run flask --app app run --debug",
-      "build": "uv sync --no-deps",
+      "build": "uv sync --no-dev",
       "clean": "uv clean && rm -rf .venv __pycache__"
     }
 }
