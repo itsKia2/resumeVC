@@ -1,10 +1,12 @@
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 import os
 import warnings
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from clerk_backend_api import Clerk
 from clerk_backend_api.jwks_helpers import AuthenticateRequestOptions
+from flask_cors import CORS
+import sys
 
 # Suppress specific warning from Clerk SDK
 warnings.filterwarnings(
@@ -20,20 +22,34 @@ supabase: Client = create_client(url, key)
 
 app = Flask(__name__)
 
-@app.route('/')
-def hello_world():
-    return 'Hello World!'
+CORS(app)
+
+# Serve the frontend
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    if path != "" and os.path.exists(os.path.join("../client/dist", path)):
+        return send_from_directory("../client/dist", path)
+    else:
+        return send_from_directory("../client/dist", "index.html")
 
 @app.route('/api/userId')
-def user():
+def userId():
     sdk = Clerk(bearer_auth=os.getenv('CLERK_SECRET_KEY'))
+    #print("Request headers:", request.headers, file=sys.stderr)
+    #print("Request args:", request.args, file=sys.stderr)
+    #print("Request data:", request.data, file=sys.stderr)
+
     request_state = sdk.authenticate_request(
         request,
         AuthenticateRequestOptions(
-            authorized_parties=['https://example.com', 'http://localhost', 'http://127.0.0.1']
+            authorized_parties=['http://127.0.0.1:5000']
         )
     )
-    if request_state.is_signed_in:
-        return {'userId': request_state.user_id}, 200
-    else:
+
+    if request_state.is_signed_in and request_state.payload and 'sub' in request_state.payload:
+        return {'userId': request_state.payload['sub']}, 200
+    elif not request_state.is_signed_in:
         return {'error': 'User not signed in'}, 401
+    else:
+        return {'error': 'User ID not found in request state'}, 500
