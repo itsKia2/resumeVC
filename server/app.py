@@ -6,7 +6,6 @@ from supabase import create_client, Client
 from clerk_backend_api import Clerk
 from clerk_backend_api.jwks_helpers import AuthenticateRequestOptions
 from flask_cors import CORS
-import sys
 
 # Suppress specific warning from Clerk SDK
 warnings.filterwarnings(
@@ -20,18 +19,22 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="../client/dist", static_url_path="")
 
 CORS(app)
 
 # Serve the frontend
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_frontend(path):
-    if path != "" and os.path.exists(os.path.join("../client/dist", path)):
-        return send_from_directory("../client/dist", path)
+@app.route("/")
+def serve_react_index():
+    return send_from_directory(app.static_folder, "index.html")
+
+@app.route("/<path:path>")
+def serve_static_files(path):
+    file_path = os.path.join(app.static_folder, path)
+    if os.path.exists(file_path):
+        return send_from_directory(app.static_folder, path)
     else:
-        return send_from_directory("../client/dist", "index.html")
+        return send_from_directory(app.static_folder, "index.html")
 
 @app.route('/api/userId')
 def userId():
@@ -43,7 +46,7 @@ def userId():
     request_state = sdk.authenticate_request(
         request,
         AuthenticateRequestOptions(
-            authorized_parties=['http://127.0.0.1:5000']
+            authorized_parties=['http://127.0.0.1:5000','http://localhost:5173']
         )
     )
 
@@ -53,3 +56,7 @@ def userId():
         return {'error': 'User not signed in'}, 401
     else:
         return {'error': 'User ID not found in request state'}, 500
+
+@app.route("/api/hello")
+def hello():
+    return {"message": "Hello from Flask!!!"}

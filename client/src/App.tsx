@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [message, setMessage] = useState<string | null>(null)
 
   return (
     <>
@@ -28,9 +28,26 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <Button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </Button>
+        <div>
+          <Button
+            variant="ghost"
+            onClick={async () => {
+              try {
+          const response = await fetch('/api/hello');
+          if (!response.ok) {
+            throw new Error('Failed to fetch hello message from flask');
+          }
+          const data = await response.json();
+          setMessage(data.message);
+              } catch (error) {
+          console.error('Error fetching helo message from flask:', error);
+              }
+            }}
+          >
+            Fetch hello message from flask
+          </Button>
+          {message && <p>Message: {message}</p>}
+        </div>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
