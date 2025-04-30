@@ -36,19 +36,19 @@ def serve_static_files(path):
     else:
         return send_from_directory(app.static_folder, "index.html")
 
-@app.route('/api/userId')
-def userId():
+def authenticate_with_clerk(request):
     sdk = Clerk(bearer_auth=os.getenv('CLERK_SECRET_KEY'))
-    #print("Request headers:", request.headers, file=sys.stderr)
-    #print("Request args:", request.args, file=sys.stderr)
-    #print("Request data:", request.data, file=sys.stderr)
-
     request_state = sdk.authenticate_request(
         request,
         AuthenticateRequestOptions(
-            authorized_parties=['http://127.0.0.1:5000','http://localhost:5173']
+            authorized_parties=['http://127.0.0.1:5000', 'http://localhost:5173']
         )
     )
+    return request_state
+
+@app.route('/api/userId')
+def userId():
+    request_state = authenticate_with_clerk(request)
 
     if request_state.is_signed_in and request_state.payload and 'sub' in request_state.payload:
         return {'userId': request_state.payload['sub']}, 200
