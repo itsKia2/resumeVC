@@ -7,6 +7,7 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-reac
 
 function App() {
   const [message, setMessage] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   return (
     <>
@@ -30,7 +31,6 @@ function App() {
       <div className="card">
         <div>
           <Button
-            variant="ghost"
             onClick={async () => {
               try {
           const response = await fetch('/api/hello');
@@ -44,9 +44,28 @@ function App() {
               }
             }}
           >
-            Fetch hello message from flask
+            Fetch message from flask
           </Button>
           {message && <p>Message: {message}</p>}
+        </div>
+        <div>
+          <Button
+            onClick={async () => {
+              try {
+          const response = await fetch('/api/userId');
+          if (!response.ok) {
+            throw new Error('Failed to fetch userId from flask');
+          }
+          const data = await response.json();
+          setUserId(data.userId);
+              } catch (error) {
+          console.error('Error fetching userId from flask:', error);
+              }
+            }}
+          >
+            Fetch user ID from flask
+          </Button>
+          {userId && <p>User ID: {userId}</p>}
         </div>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
