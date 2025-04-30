@@ -1,12 +1,45 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react"
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/clerk-react"
 
-export default function Example() {
+const Example: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const { user } = useUser()
+
+  const handleSetOnboardingFalse = async () => {
+    if (!user || isUpdating) return
+
+    try {
+      setIsUpdating(true)
+
+      const response = await fetch('/api/user', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboardingComplete: false }),
+      });
+
+      if (response.ok) {
+        alert('onboardingComplete set to false successfully')
+
+        // Force reload the user object to get the updated metadata
+        await user.reload()
+
+        // Redirect to force the onboarding flow to trigger
+        window.location.href = '/'
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to update onboardingComplete: ${errorData.error}`)
+      }
+    } catch (err) {
+      alert('An error occurred while updating onboardingComplete')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   return (
     <div className="max-w-md mx-auto p-6">
@@ -50,6 +83,16 @@ export default function Example() {
           </Button>
           {userId && <span className="text-blue-600">{userId}</span>}
         </div>
+
+        <div className="flex items-center gap-4">
+          <Button
+            variant="destructive"
+            onClick={handleSetOnboardingFalse}
+            className="w-40"
+          >
+            Set Onboarding False
+          </Button>
+        </div>
       </div>
 
       <div className="mt-8 flex gap-2">
@@ -60,3 +103,5 @@ export default function Example() {
     </div>
   )
 }
+
+export default Example
