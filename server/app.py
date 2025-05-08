@@ -196,6 +196,7 @@ def onboarding():
     try:
         # Check if the user already exists in the database
         existing_user = supabase.table('users').select('*').eq('clerk_id', user_id).execute()
+        # print(existing_user)
 
         if not existing_user.data:
             # Insert user into the database only if they don't exist
