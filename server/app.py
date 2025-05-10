@@ -232,3 +232,25 @@ def get_user_id():
         return {'error': 'User ID not found'}, 400
 
     return {'userId': user_id}, 200
+
+@app.route('/api/resume-upload', methods=['POST'])
+def get_resume():
+    request_state = authenticate_with_clerk(request)
+    if not request_state.is_signed_in:
+        return {'error': 'User not signed in'}, 401
+
+    user_id = request_state.payload.get('sub')
+    if not user_id:
+        return {'error': 'User ID not found'}, 400
+
+    if 'pdf' not in request.files:
+        return {'error': 'No file part in request'}, 400
+
+    file = request.files['pdf']
+
+    if file.filename == '':
+        return {'error': 'No selected file'}, 400
+
+    print(f"Received resume file: {file.filename} from user: {user_id}", file=sys.stderr)
+
+    return {'message': f"Received file: {file.filename}"}, 200

@@ -1,45 +1,51 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/clerk-react"
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+  useUser,
+} from "@clerk/clerk-react";
 
 const Example: React.FC = () => {
-  const [message, setMessage] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
-  const [isUpdating, setIsUpdating] = useState(false)
-  const { user } = useUser()
+  const [message, setMessage] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { user } = useUser();
 
   const handleSetOnboardingFalse = async () => {
-    if (!user || isUpdating) return
+    if (!user || isUpdating) return;
 
     try {
-      setIsUpdating(true)
+      setIsUpdating(true);
 
-      const response = await fetch('/api/user', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ onboardingComplete: false }),
       });
 
       if (response.ok) {
-        alert('onboardingComplete set to false successfully')
+        alert("onboardingComplete set to false successfully");
 
         // Force reload the user object to get the updated metadata
-        await user.reload()
+        await user.reload();
 
         // Redirect to force the onboarding flow to trigger
-        window.location.href = '/'
+        window.location.href = "/";
       } else {
-        const errorData = await response.json()
-        alert(`Failed to update onboardingComplete: ${errorData.error}`)
+        const errorData = await response.json();
+        alert(`Failed to update onboardingComplete: ${errorData.error}`);
       }
     } catch (err) {
-      alert('An error occurred while updating onboardingComplete')
+      alert("An error occurred while updating onboardingComplete");
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   return (
     <div className="max-w-md mx-auto p-6">
@@ -58,9 +64,9 @@ const Example: React.FC = () => {
         <div className="flex items-center gap-4">
           <Button
             onClick={async () => {
-              const response = await fetch("/api/hello")
-              const data = await response.json()
-              setMessage(data.message)
+              const response = await fetch("/api/hello");
+              const data = await response.json();
+              setMessage(data.message);
             }}
             className="w-40"
           >
@@ -73,9 +79,9 @@ const Example: React.FC = () => {
           <Button
             variant="outline"
             onClick={async () => {
-              const response = await fetch("/api/userId")
-              const data = await response.json()
-              data.userId ? setUserId(data.userId) : setUserId(data.error)
+              const response = await fetch("/api/userId");
+              const data = await response.json();
+              data.userId ? setUserId(data.userId) : setUserId(data.error);
             }}
             className="w-40"
           >
@@ -101,7 +107,7 @@ const Example: React.FC = () => {
         <Button variant="destructive">Destructive</Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Example
+export default Example;
