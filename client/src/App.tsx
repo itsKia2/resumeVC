@@ -1,10 +1,12 @@
-import Example from "@/pages/Example";
+// src/App.tsx
 
 export default function App() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">Example app</h1>
-      <Example />
-    </div>
-  )
+    <main className="flex flex-col items-center justify-center p-6 gap-6">
+      <h1 className="text-2xl font-bold">Welcome to Resume Manager</h1>
+      <p className="text-gray-700">
+        Navigate using the menu above to manage your resumes and collections.
+      </p>
+    </main>
+  );
 }
