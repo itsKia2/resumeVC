@@ -60,6 +60,12 @@ def update_onboarding_status(user_id, status):
         }
     )
 
+# error 401 user not signed in
+# error 400 user id not found
+# error 404 user not found in db
+# error 405 user details not provided
+# error 500 error fetching user from db
+# response 200 successful
 @app.route('/api/user', methods=['POST', 'PUT', 'DELETE', 'GET'])
 def user_endpoint():
     request_state = authenticate_with_clerk(request)
@@ -95,7 +101,7 @@ def user_endpoint():
         name = data.get('name')
 
         if not email or not name:
-            return {'error': 'Missing required fields'}, 400
+            return {'error': 'Missing required fields'}, 405
 
         try:
             # First, check if user already exists
@@ -175,6 +181,12 @@ def user_endpoint():
     
     return {'error': 'Invalid request method'}, 405
 
+# error 401 user not signed in
+# error 400 user id not found
+# error 404 user not found in db
+# error 405 user details not provided
+# error 500 error during onboarding
+# response 200 successful
 @app.route('/api/onboarding', methods=['POST'])
 def onboarding():
     request_state = authenticate_with_clerk(request)
@@ -191,7 +203,7 @@ def onboarding():
     name = data.get('name')
 
     if not email or not name:
-        return {'error': 'Missing required fields'}, 400
+        return {'error': 'Missing required fields'}, 405
 
     try:
         # Check if the user already exists in the database
@@ -220,6 +232,9 @@ def onboarding():
         print(f"Error during onboarding: {e}", file=sys.stderr)
         return {'error': str(e)}, 500
 
+# error 401 user not signed in
+# error 400 user id not found
+# response 200 successful
 @app.route('/api/userId', methods=['GET'])
 def get_user_id():
     request_state = authenticate_with_clerk(request)
@@ -233,6 +248,10 @@ def get_user_id():
 
     return {'userId': user_id}, 200
 
+# error 401 user not signed in
+# error 400 user id not found
+# error 402 incorrect file type uploaded
+# response 200 successful
 @app.route('/api/resume-upload', methods=['POST'])
 def get_resume():
     request_state = authenticate_with_clerk(request)
@@ -244,13 +263,8 @@ def get_resume():
         return {'error': 'User ID not found'}, 400
 
     if 'pdf' not in request.files:
-        return {'error': 'No file part in request'}, 400
-
+        return {'error': 'Incorrect file type provided'}, 402
     file = request.files['pdf']
 
-    if file.filename == '':
-        return {'error': 'No selected file'}, 400
-
     print(f"Received resume file: {file.filename} from user: {user_id}", file=sys.stderr)
-
     return {'message': f"Received file: {file.filename}"}, 200
