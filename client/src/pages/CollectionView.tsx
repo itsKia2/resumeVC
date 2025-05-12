@@ -8,6 +8,7 @@ export default function CollectionView() {
   const [responseText, setResponseText] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
+  const [category, setCategory] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] || null);
@@ -21,6 +22,7 @@ export default function CollectionView() {
 
     const formData = new FormData();
     formData.append("pdf", file);
+    formData.append("category", category);
 
     setIsLoading(true);
     try {
@@ -55,12 +57,28 @@ export default function CollectionView() {
         <SignedIn>
           <div className="flex flex-col gap-2">
             <p className="text-muted-foreground">Hi, {user?.firstName}!</p>
+            {/* category inputting */}
+            <label htmlFor="category" className="text-sm font-medium">
+              Enter Category <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="category"
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="e.g., Finance, Accounting, etc."
+              className="border rounded px-2 py-1"
+              required
+            />
+
+            {/* file inputting */}
             <input
               type="file"
               accept="application/pdf"
               onChange={handleFileChange}
               className="text-xs"
             />
+
             <Button
               size="sm"
               onClick={handleUpload}

@@ -254,6 +254,7 @@ def get_resume():
     if not user_id:
         return {'error': 'User ID not found'}, 400
 
+    # GETTING PDF
     if 'pdf' not in request.files:
         return {'error': 'Incorrect file type provided'}, 402
     file = request.files['pdf']
@@ -262,8 +263,11 @@ def get_resume():
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
 
+    # GETTING CATEGORIES
+    category = request.form['category']
+
     streamFile = BufferedReader(file.stream)
-    uploadFile("resume", filename, streamFile)
+    uploadFile(user_id, "resume", filename, streamFile, category)
 
     # print(f"Received resume file: {file.filename} from user: {user_id}", file=sys.stderr)
     return {'message': f'Upload successful - {filename}'}, 200
