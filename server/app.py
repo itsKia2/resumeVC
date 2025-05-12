@@ -8,6 +8,10 @@ from clerk_backend_api import Clerk
 from clerk_backend_api.jwks_helpers import AuthenticateRequestOptions
 from flask_cors import CORS
 
+from flask import send_file
+UPLOAD_FOLDER = '/tmp/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 # Suppress specific warning from Clerk SDK
 warnings.filterwarnings(
     'ignore', 
@@ -265,6 +269,10 @@ def get_resume():
     if 'pdf' not in request.files:
         return {'error': 'Incorrect file type provided'}, 402
     file = request.files['pdf']
+    # filename = secure_filename(file.filename)
+    filename = file.filename
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(filepath)
 
-    print(f"Received resume file: {file.filename} from user: {user_id}", file=sys.stderr)
-    return {'message': f"Received file: {file.filename}"}, 200
+    # print(f"Received resume file: {file.filename} from user: {user_id}", file=sys.stderr)
+    return {'message': f'Upload successful {filepath}'}, 200
