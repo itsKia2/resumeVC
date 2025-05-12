@@ -8,7 +8,8 @@ from clerk_backend_api import Clerk
 from clerk_backend_api.jwks_helpers import AuthenticateRequestOptions
 from flask_cors import CORS
 
-from database import createUser, deleteUser, getUsers, initSupabase
+from database import createUser, deleteUser, getUsers, uploadFile
+from io import BufferedReader
 
 UPLOAD_FOLDER = '/tmp/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -18,12 +19,6 @@ warnings.filterwarnings(
     'ignore', 
     message='authenticate_request method is applicable in the context of Backend APIs only.'
 )
-
-# load_dotenv()
-
-# url: str = os.environ.get("SUPABASE_URL")
-# key: str = os.environ.get("SUPABASE_KEY")
-# supabase: Client = create_client(url, key)
 
 app = Flask(__name__, static_folder="../client/dist", static_url_path="")
 
@@ -266,7 +261,9 @@ def get_resume():
     filename = file.filename
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
-    initSupabase()
+
+    streamFile = BufferedReader(file.stream)
+    uploadFile("resume", filename, streamFile)
 
     # print(f"Received resume file: {file.filename} from user: {user_id}", file=sys.stderr)
-    return {'message': f'Upload successful - {filepath}'}, 200
+    return {'message': f'Upload successful - {filename}'}, 200
