@@ -8,7 +8,8 @@ from clerk_backend_api import Clerk
 from clerk_backend_api.jwks_helpers import AuthenticateRequestOptions
 from flask_cors import CORS
 
-from flask import send_file
+from database import createUser, deleteUser, getUsers, initSupabase
+
 UPLOAD_FOLDER = '/tmp/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -18,11 +19,11 @@ warnings.filterwarnings(
     message='authenticate_request method is applicable in the context of Backend APIs only.'
 )
 
-load_dotenv()
+# load_dotenv()
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
+# url: str = os.environ.get("SUPABASE_URL")
+# key: str = os.environ.get("SUPABASE_KEY")
+# supabase: Client = create_client(url, key)
 
 app = Flask(__name__, static_folder="../client/dist", static_url_path="")
 
@@ -85,7 +86,7 @@ def user_endpoint():
     if request.method == 'GET':
         # Get user
         try:
-            response = supabase.table('users').select('*').eq('clerk_id', user_id).execute()
+            response = getUsers(user_id)
 
             if response.get('error'):
                 raise Exception(response['error']['message'])
@@ -109,15 +110,11 @@ def user_endpoint():
 
         try:
             # First, check if user already exists
-            existing_user = supabase.table('users').select('*').eq('clerk_id', user_id).execute()
+            existing_user = getUsers(user_id)
             
             if not existing_user.data:
                 # Only create if user doesn't exist
-                supabase.table('users').insert({
-                    'clerk_id': user_id,
-                    'email': email,
-                    'name': name
-                }).execute()
+                createUser(user_id, email, name)
                 print(f"Created new user: {user_id}", file=sys.stderr)
             else:
                 print(f"User already exists: {user_id}", file=sys.stderr)
@@ -171,7 +168,7 @@ def user_endpoint():
         # Delete user
         # If the user deletes their account through Clerk, this endpoint doesn't make sense since it uses the Clerk user object, but it's useful for testing the onboarding endpoint.
         try:
-            response = supabase.table('users').delete().eq('clerk_id', user_id).execute()
+            response = deleteUser(user_id)
 
             if response.get('error'):
                 raise Exception(response['error']['message'])
@@ -211,16 +208,12 @@ def onboarding():
 
     try:
         # Check if the user already exists in the database
-        existing_user = supabase.table('users').select('*').eq('clerk_id', user_id).execute()
-        # print(existing_user)
+        # existing_user = supabase.table('users').select('*').eq('clerk_id', user_id).execute()
+        existing_user = getUsers(user_id)
 
         if not existing_user.data:
             # Insert user into the database only if they don't exist
-            supabase.table('users').insert({
-                'clerk_id': user_id,
-                'email': email,
-                'name': name
-            }).execute()
+            createUser(user_id, email, name)
 
         # Update Clerk metadata unconditionally
         sdk = Clerk(bearer_auth=os.getenv('CLERK_SECRET_KEY'))
@@ -273,6 +266,7 @@ def get_resume():
     filename = file.filename
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
+    initSupabase()
 
     # print(f"Received resume file: {file.filename} from user: {user_id}", file=sys.stderr)
-    return {'message': f'Upload successful {filepath}'}, 200
+    return {'message': f'Upload successful - {filepath}'}, 200
