@@ -1,7 +1,7 @@
 // src/router.tsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Layout from './components/ui/layout';
+import Layout from './components/ui/Layout';
 
 import CollectionView from './pages/CollectionView';
 import JobAnalysis from './pages/JobAnalysis';
