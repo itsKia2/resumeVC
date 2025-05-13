@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/clerk-react";
 import React, { useState } from "react";
+import { SignInAlert } from "@/components/ui/SignInAlert";
 
 export default function CollectionView() {
   const [file, setFile] = useState<File | null>(null);
@@ -45,16 +46,11 @@ export default function CollectionView() {
 
   return (
     <div className="p-8">
-      <div className="p-2 border rounded-lg shadow-sm max-w-md mx-auto text-sm">
-        <SignedOut>
-          <SignInButton mode="modal">
-            <Button size="sm" variant="default">
-              Sign in
-            </Button>
-          </SignInButton>
-        </SignedOut>
-
-        <SignedIn>
+      <SignedOut>
+        <SignInAlert />
+      </SignedOut>
+      <SignedIn>
+        <div className="p-2 border rounded-lg shadow-sm max-w-md mx-auto text-sm">
           <div className="flex flex-col gap-2">
             <p className="text-muted-foreground">Hi, {user?.firstName}!</p>
             {/* category inputting */}
@@ -93,20 +89,19 @@ export default function CollectionView() {
               </div>
             )}
           </div>
-        </SignedIn>
-      </div>
-
-      <h2 className="text-2xl font-semibold mb-4">Your Resume Collections</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="font-bold">Software Engineer</h3>
-            <p className="text-sm text-gray-600">3 versions</p>
-            <Button className="mt-2">View</Button>
-          </CardContent>
-        </Card>
-        {/* Repeat for mock data or loop through fetched resumes */}
-      </div>
+        </div>
+        <h2 className="text-2xl font-semibold mb-4">Your Resume Collections</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="font-bold">Software Engineer</h3>
+              <p className="text-sm text-gray-600">3 versions</p>
+              <Button className="mt-2">View</Button>
+            </CardContent>
+          </Card>
+          {/* Repeat for mock data or loop through fetched resumes */}
+        </div>
+      </SignedIn>
     </div>
   );
 }
