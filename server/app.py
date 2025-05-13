@@ -173,53 +173,6 @@ def user_endpoint():
 
 # error 401 user not signed in
 # error 400 user id not found
-# error 404 user not found in db
-# error 405 user details not provided
-# error 500 error during onboarding
-# response 200 successful
-@app.route('/api/onboarding', methods=['POST'])
-def onboarding():
-    request_state = authenticate_with_clerk(request)
-
-    if not request_state.is_signed_in:
-        return {'error': 'User not signed in'}, 401
-
-    user_id = request_state.payload.get('sub')
-    if not user_id:
-        return {'error': 'User ID not found'}, 400
-
-    data = request.get_json()
-    email = data.get('email')
-    name = data.get('name')
-
-    if not email or not name:
-        return {'error': 'Missing required fields'}, 405
-
-    try:
-        # Check if the user already exists in the database
-        # existing_user = supabase.table('users').select('*').eq('clerk_id', user_id).execute()
-        existing_user = getUsers(user_id)
-
-        if not existing_user.data:
-            # Insert user into the database only if they don't exist
-            createUser(user_id, email, name)
-
-        # Update Clerk metadata unconditionally
-        sdk = Clerk(bearer_auth=os.getenv('CLERK_SECRET_KEY'))
-        sdk.users.update_metadata(
-            user_id=user_id,
-            public_metadata={
-                'onboardingComplete': True
-            }
-        )
-
-        return {'message': 'Onboarding complete'}, 200
-    except Exception as e:
-        print(f"Error during onboarding: {e}", file=sys.stderr)
-        return {'error': str(e)}, 500
-
-# error 401 user not signed in
-# error 400 user id not found
 # response 200 successful
 @app.route('/api/userId', methods=['GET'])
 def get_user_id():
