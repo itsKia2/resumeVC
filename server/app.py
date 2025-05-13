@@ -115,13 +115,7 @@ def user_endpoint():
                 print(f"User already exists: {user_id}", file=sys.stderr)
             
             # Always set onboarding complete (idempotent operation)
-            sdk = Clerk(bearer_auth=os.getenv('CLERK_SECRET_KEY'))
-            sdk.users.update_metadata(
-                user_id=user_id,
-                public_metadata={
-                    'onboardingComplete': True
-                }
-            )
+            update_onboarding_status(user_id, True)
             print(f"Onboarding complete for user: {user_id}", file=sys.stderr)
             
             return {'message': 'User created/verified and onboarding completed'}, 200
