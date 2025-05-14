@@ -1,9 +1,11 @@
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Search, Upload, MoreHorizontal, FileText, FolderOpen, Loader2 } from "lucide-react"
 import { useUser } from "@clerk/clerk-react"
+import useSWR from "swr"
+import useSWRMutation from "swr/mutation"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { fetcher } from "@/lib/utils"
 
 // Types
 interface Category {
@@ -41,6 +44,50 @@ interface Resume {
   link?: string
 }
 
+// Mutation functions
+async function deleteResumeFetcher(url: string, { arg }: { arg: { id: string } }) {
+  const response = await fetch(`${url}/${arg.id}`, {
+    method: 'DELETE',
+  })
+  
+  if (!response.ok) {
+    throw new Error('Failed to delete resume')
+  }
+  
+  return response.json()
+}
+
+async function moveResumeFetcher(url: string, { arg }: { arg: { id: string, categoryId: string } }) {
+  const response = await fetch(`${url}/${arg.id}/move`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      categoryId: arg.categoryId
+    })
+  })
+  
+  if (!response.ok) {
+    throw new Error('Failed to move resume')
+  }
+  
+  return response.json()
+}
+
+async function uploadResumeFetcher(url: string, { arg }: { arg: { formData: FormData } }) {
+  const response = await fetch(url, {
+    method: 'POST',
+    body: arg.formData
+  })
+  
+  if (!response.ok) {
+    throw new Error('Failed to upload resume')
+  }
+  
+  return response.json()
+}
+
 // Utility to strip _timestamp from filename
 function stripTimestampFromFilename(filename: string): string {
   // Matches _YYYYMMDDHHMMSS before the file extension
@@ -54,139 +101,108 @@ export default function CategoryPage() {
   const categoryId = params.id as string
 
   // State
-  const [categories, setCategories] = useState<Category[]>([
-    { id: "all", name: "All" }
-  ])
-  const [resumes, setResumes] = useState<Resume[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [resumeToMove, setResumeToMove] = useState<Resume | null>(null)
   const [resumeToDelete, setResumeToDelete] = useState<Resume | null>(null)
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState<boolean>(false)
   const [file, setFile] = useState<File | null>(null)
-  const [isUploading, setIsUploading] = useState<boolean>(false)
   const [uploadResponse, setUploadResponse] = useState<string | null>(null)
 
-  // Fetch categories and resumes
-  useEffect(() => {
-    if (!isLoaded) {
-      setIsLoading(true)
-      return
+  // SWR data fetching
+  const shouldFetch = isLoaded && isSignedIn && !!user
+  
+  // Fetch categories data
+  const { 
+    data: categoriesData,
+    error: categoriesError
+  } = useSWR(shouldFetch ? '/api/categories' : null, fetcher)
+  
+  // Fetch resumes for the current category
+  const {
+    data: resumesData,
+    error: resumesError,
+    isLoading,
+    mutate: mutateResumes
+  } = useSWR(shouldFetch ? `/api/categories/${categoryId}/resumes` : null, fetcher)
+  
+  // Mutations
+  const { trigger: deleteResume, isMutating: isDeleting } = useSWRMutation('/api/resumes', deleteResumeFetcher, {
+    onSuccess: () => {
+      mutateResumes()
+      setResumeToDelete(null)
     }
-
-    if (isSignedIn && user) {
-      const fetchData = async () => {
-        setIsLoading(true)
-        try {
-          const categoriesResponse = await fetch('/api/categories')
-          if (!categoriesResponse.ok) throw new Error('Failed to fetch categories list')
-          const categoriesData = await categoriesResponse.json()
-          setCategories(Array.isArray(categoriesData.categories) ? categoriesData.categories : [])
-
-          const resumesResponse = await fetch(`/api/categories/${categoryId}/resumes`)
-          if (!resumesResponse.ok) {
-            throw new Error('Failed to fetch resumes')
-          }
-          const resumesData = await resumesResponse.json()
-
-          const formattedResumes: Resume[] = Array.isArray(resumesData.resumes)
-            ? resumesData.resumes.map((resume: any) => ({
-                id: resume.id,
-                name: resume.name,
-                categoryId: resume.category_id,
-                uploadDate: new Date(resume.date).toISOString().split('T')[0],
-                fileSize: "N/A",
-                link: resume.link
-              }))
-            : []
-
-          setResumes(formattedResumes)
-          setError(null)
-        } catch (err) {
-          console.error('Error fetching data:', err)
-          setError('Failed to load data. Please try again later.')
-        } finally {
-          setIsLoading(false)
-        }
-      }
-      fetchData()
-    } else {
-      setIsLoading(false)
-      setCategories([])
-      setResumes([])
-      setError("Please sign in to view your categories and resumes.")
+  })
+  
+  const { trigger: moveResume, isMutating: isMoving } = useSWRMutation('/api/resumes', moveResumeFetcher, {
+    onSuccess: () => {
+      mutateResumes()
+      setResumeToMove(null)
     }
-  }, [isLoaded, isSignedIn, user?.id, categoryId])
+  })
+  
+  const { trigger: uploadResume, isMutating: isUploading } = useSWRMutation('/api/resume-upload', uploadResumeFetcher, {
+    onSuccess: () => {
+      mutateResumes()
+      setUploadResponse(`Successfully uploaded ${file?.name}`)
+      setTimeout(() => {
+        setFile(null)
+        setUploadResponse(null)
+        setIsUploadDialogOpen(false)
+      }, 2000)
+    },
+    onError: () => {
+      setUploadResponse(`Error: Failed to upload ${file?.name}. Please try again.`)
+    }
+  })
+
+  // Extract data from SWR responses
+  const categories: Category[] = shouldFetch 
+    ? (categoriesData?.categories || []).concat({ id: "all", name: "All" }) 
+    : [{ id: "all", name: "All" }]
+    
+  const formattedResumes: Resume[] = shouldFetch && resumesData?.resumes
+    ? resumesData.resumes.map((resume: any) => ({
+        id: resume.id,
+        name: resume.name,
+        categoryId: resume.category_id,
+        uploadDate: new Date(resume.date).toISOString().split('T')[0],
+        fileSize: "N/A",
+        link: resume.link
+      }))
+    : []
+
+  // Determine loading and error state
+  const isFetchLoading = !isLoaded || isLoading
+  const isMutationLoading = isDeleting || isMoving || isUploading
+  const isAnyLoading = isFetchLoading || isMutationLoading
+  
+  const error = categoriesError || resumesError
+    ? 'Failed to load data. Please try again later.'
+    : (!isSignedIn && isLoaded) ? "Please sign in to view your categories and resumes." : null
 
   const currentCategoryName =
     categoryId === "all"
-      ? categories.find(cat => cat.id === "all")?.name || "All"
-      : isLoading
+      ? "All"
+      : isAnyLoading
         ? "Loading..."
-        : categories.find(cat => cat.id.toString() === categoryId.toString())?.name || "Category Not Found"
+        : categories.find((cat: Category) => cat.id.toString() === categoryId.toString())?.name || "Category Not Found"
 
-  const filteredResumes = resumes.filter((resume) => {
+  const filteredResumes = formattedResumes.filter((resume: Resume) => {
     const matchesSearch = resume.name.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesSearch
   })
 
   const getCategoryName = (categoryId: string) => {
-    const category = categories.find((cat) => cat.id === categoryId)
+    const category = categories.find((cat: Category) => cat.id === categoryId)
     return category ? category.name : "Uncategorized"
   }
 
   const handleDeleteResume = async (resumeId: string) => {
-    try {
-      setIsLoading(true)
-
-      const response = await fetch(`/api/resumes/${resumeId}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete resume')
-      }
-
-      setResumes(resumes.filter(resume => resume.id !== resumeId))
-      setResumeToDelete(null)
-
-    } catch (err) {
-      console.error('Error deleting resume:', err)
-      setError('Failed to delete resume. Please try again later.')
-    } finally {
-      setIsLoading(false)
-    }
+    deleteResume({ id: resumeId })
   }
 
   const handleChangeCategory = async (resumeId: string, newCategoryId: string) => {
-    try {
-      setIsLoading(true)
-
-      const response = await fetch(`/api/resumes/${resumeId}/move`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          categoryId: newCategoryId
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to move resume')
-      }
-
-      setResumes(resumes.map((resume) =>
-        resume.id === resumeId ? { ...resume, categoryId: newCategoryId } : resume
-      ))
-
-    } catch (err) {
-      console.error('Error moving resume:', err)
-      setError('Failed to move resume. Please try again later.')
-    } finally {
-      setIsLoading(false)
-    }
+    moveResume({ id: resumeId, categoryId: newCategoryId })
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,58 +212,14 @@ export default function CategoryPage() {
   const handleUpload = async () => {
     if (!file) return
 
-    setIsUploading(true)
+    const formData = new FormData()
+    formData.append('pdf', file)
 
-    try {
-      const formData = new FormData()
-      formData.append('pdf', file)
+    // Use categoryId directly for upload
+    let categoryIdToUpload = categoryId === "all" ? "" : categoryId
+    formData.append('categoryId', categoryIdToUpload)
 
-      // Use categoryId directly for upload
-      let categoryIdToUpload = categoryId === "all" ? "" : categoryId;
-      formData.append('categoryId', categoryIdToUpload)
-
-      const response = await fetch('/api/resume-upload', {
-        method: 'POST',
-        body: formData
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to upload resume')
-      }
-
-      await response.json()
-
-      const resumesResponse = await fetch(`/api/categories/${categoryId}/resumes`)
-      if (!resumesResponse.ok) {
-        throw new Error('Failed to refresh resume list')
-      }
-
-      const resumesData = await resumesResponse.json()
-
-      const formattedResumes: Resume[] = resumesData.resumes.map((resume: any) => ({
-        id: resume.id,
-        name: resume.name,
-        categoryId: resume.category_id,
-        uploadDate: new Date(resume.date).toISOString().split('T')[0],
-        fileSize: "N/A",
-        link: resume.link
-      }))
-
-      setResumes(formattedResumes)
-      setUploadResponse(`Successfully uploaded ${file.name}`)
-
-      setTimeout(() => {
-        setFile(null)
-        setUploadResponse(null)
-        setIsUploadDialogOpen(false)
-      }, 2000)
-
-    } catch (err) {
-      console.error('Error uploading file:', err)
-      setUploadResponse(`Error: Failed to upload ${file.name}. Please try again.`)
-    } finally {
-      setIsUploading(false)
-    }
+    uploadResume({ formData })
   }
 
   return (
@@ -284,7 +256,7 @@ export default function CategoryPage() {
         </div>
 
         <ScrollArea className="h-[calc(100vh-200px)]">
-          {isLoading ? (
+          {isFetchLoading ? (
             <div className="flex justify-center items-center h-48">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2 text-lg">Loading resumes...</span>
@@ -381,8 +353,8 @@ export default function CategoryPage() {
             <ScrollArea className="h-[200px]">
               <div className="grid gap-2">
                 {categories
-                  .filter((cat) => cat.id !== "all" && (resumeToMove ? cat.id !== resumeToMove.categoryId : true))
-                  .map((category) => (
+                  .filter((cat: Category) => cat.id !== "all" && (resumeToMove ? cat.id !== resumeToMove.categoryId : true))
+                  .map((category: Category) => (
                     <Button
                       key={category.id}
                       variant="outline"
@@ -390,7 +362,6 @@ export default function CategoryPage() {
                       onClick={() => {
                         if (resumeToMove) {
                           handleChangeCategory(resumeToMove.id, category.id)
-                          setResumeToMove(null)
                         }
                       }}
                     >
@@ -420,8 +391,12 @@ export default function CategoryPage() {
             <Button variant="outline" onClick={() => setResumeToDelete(null)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={() => resumeToDelete && handleDeleteResume(resumeToDelete.id)}>
-              Delete
+            <Button 
+              variant="destructive" 
+              onClick={() => resumeToDelete && handleDeleteResume(resumeToDelete.id)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -433,7 +408,7 @@ export default function CategoryPage() {
             <DialogTitle>Upload Resume</DialogTitle>
             <DialogDescription>
               Upload a new resume to{" "}
-              {categoryId === "all" ? "your collection" : `the ${categories.find((cat) => cat.id === categoryId)?.name || "General"} category`}.
+              {categoryId === "all" ? "your collection" : `the ${categories.find((cat: Category) => cat.id === categoryId)?.name || "General"} category`}.
             </DialogDescription>
           </DialogHeader>
 

@@ -1,9 +1,11 @@
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, Search, MoreHorizontal, ChevronRight, FolderOpen, Loader2 } from "lucide-react"
 import { SignedIn, SignedOut, useUser } from "@clerk/clerk-react"
+import useSWR from "swr"
+import useSWRMutation from "swr/mutation"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { SignInAlert } from "@/components/ui/SignInAlert"
+import { fetcher } from "@/lib/utils"
 
 // Types
 interface Category {
@@ -34,14 +37,58 @@ interface Category {
     resumeCount: number
 }
 
+// Mutation function for creating a new category
+async function createCategoryFetcher(url: string, { arg }: { arg: { name: string } }) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(arg)
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to create category');
+    }
+    
+    return response.json();
+}
+
+// Mutation function for renaming category
+async function renameCategoryFetcher(url: string, { arg }: { arg: { id: string, name: string } }) {
+    const response = await fetch(`${url}/${arg.id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: arg.name })
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to rename category');
+    }
+    
+    return response.json();
+}
+
+// Mutation function for deleting category
+async function deleteCategoryFetcher(url: string, { arg }: { arg: { id: string } }) {
+    const response = await fetch(`${url}/${arg.id}`, {
+        method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to delete category');
+    }
+    
+    return response.json();
+}
+
 export default function CategoriesPage() {
     const navigate = useNavigate()
     const { user } = useUser()
 
     // State
-    const [categories, setCategories] = useState<Category[]>([])
-    const [isLoading, setIsLoading] = useState<boolean>(true)
-    const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState<string>("")
     const [newCategoryName, setNewCategoryName] = useState<string>("")
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false)
@@ -51,146 +98,78 @@ export default function CategoriesPage() {
     const [isCategoryDeleteDialogOpen, setIsCategoryDeleteDialogOpen] = useState<boolean>(false)
     const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
 
-    // Fetch categories from API
-    useEffect(() => {
-        const fetchCategories = async () => {
-            if (!user) return;
-            
-            setIsLoading(true);
-            try {
-                const response = await fetch('/api/categories');
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch categories');
-                }
-                
-                const data = await response.json();
-                setCategories(data.categories);
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching categories:', err);
-                setError('Failed to load categories. Please try again later.');
-                // Set empty categories array to prevent errors
-                setCategories([]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        
-        if (user) {
-            fetchCategories();
+    // Data fetching using SWR
+    const {
+        data,
+        error: fetchError,
+        isLoading,
+        mutate
+    } = useSWR(user ? '/api/categories' : null, fetcher)
+    
+    // Category creation mutation
+    const { trigger: createCategory } = useSWRMutation('/api/categories', createCategoryFetcher, {
+        onSuccess: () => {
+            // Revalidate the categories list
+            mutate();
+            setNewCategoryName("");
+            setIsCreateDialogOpen(false);
         }
-    }, [user]);
+    })
+    
+    // Category renaming mutation
+    const { trigger: renameCategory } = useSWRMutation('/api/categories', renameCategoryFetcher, {
+        onSuccess: () => {
+            // Revalidate the categories list
+            mutate();
+            setCategoryToRename(null);
+            setNewName("");
+            setIsRenameDialogOpen(false);
+        }
+    })
+    
+    // Category deletion mutation
+    const { trigger: deleteCategory } = useSWRMutation('/api/categories', deleteCategoryFetcher, {
+        onSuccess: () => {
+            // Revalidate the categories list
+            mutate();
+            setCategoryToDelete(null);
+            setIsCategoryDeleteDialogOpen(false);
+        }
+    })
 
+    // Extract categories from the data
+    const categories: Category[] = data?.categories || [];
+    
     // Filter categories based on search query
-    const filteredCategories = categories.filter((category) =>
+    const filteredCategories = categories.filter((category: Category) =>
         category.name.toLowerCase().includes(searchQuery.toLowerCase()),
     )
 
     // Handlers
     const handleCreateCategory = async () => {
         if (newCategoryName.trim()) {
-            setIsLoading(true);
-            try {
-                const response = await fetch('/api/categories', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: newCategoryName.trim()
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to create category');
-                }
-                
-                // Refetch categories to get the updated list with proper IDs
-                const categoriesResponse = await fetch('/api/categories');
-                if (!categoriesResponse.ok) {
-                    throw new Error('Failed to fetch updated categories');
-                }
-                
-                const data = await categoriesResponse.json();
-                setCategories(data.categories);
-                
-            } catch (err) {
-                console.error('Error creating category:', err);
-                setError('Failed to create category. Please try again later.');
-            } finally {
-                setIsLoading(false);
-                setNewCategoryName("");
-                setIsCreateDialogOpen(false);
-            }
+            createCategory({ name: newCategoryName.trim() });
         }
     }
 
     const handleRenameCategory = async () => {
         if (categoryToRename && newName.trim() && categoryToRename.id !== 'all') {
-            setIsLoading(true);
-            try {
-                const response = await fetch(`/api/categories/${categoryToRename.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: newName.trim()
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to rename category');
-                }
-                
-                // Update local state
-                setCategories(categories.map((cat) => 
-                    cat.id === categoryToRename.id ? { ...cat, name: newName.trim() } : cat
-                ));
-                
-            } catch (err) {
-                console.error('Error renaming category:', err);
-                setError('Failed to rename category. Please try again later.');
-            } finally {
-                setIsLoading(false);
-                setCategoryToRename(null);
-                setNewName("");
-                setIsRenameDialogOpen(false);
-            }
+            renameCategory({ id: categoryToRename.id, name: newName.trim() });
         }
     }
 
     const handleDeleteCategory = async (categoryId: string) => {
         // Don't allow deleting the "All" category
         if (categoryId === "all") return;
-
-        setIsLoading(true);
-        try {
-            const response = await fetch(`/api/categories/${categoryId}`, {
-                method: 'DELETE'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to delete category');
-            }
-            
-            // Update local state
-            setCategories(categories.filter((cat) => cat.id !== categoryId));
-            
-        } catch (err) {
-            console.error('Error deleting category:', err);
-            setError('Failed to delete category. Please try again later.');
-        } finally {
-            setIsLoading(false);
-            setCategoryToDelete(null);
-            setIsCategoryDeleteDialogOpen(false);
-        }
+        deleteCategory({ id: categoryId });
     }
 
     const navigateToCategory = (categoryId: string) => {
         navigate(`/categories/${categoryId}`)
     }
+
+    // Extract error message
+    const error = fetchError ? 'Failed to load categories. Please try again later.' : null;
 
     return (
         <>
@@ -282,7 +261,7 @@ export default function CategoriesPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {filteredCategories.map((category) => (
+                                {filteredCategories.map((category: Category) => (
                                     <Card key={category.id} className="overflow-hidden">
                                         <CardHeader className="pb-2">
                                             <div className="flex items-start justify-between">
