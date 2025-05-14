@@ -1,16 +1,17 @@
 // src/router.tsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Layout from './components/ui/Layout';
+import Layout from '@/components/ui/Layout';
 
-import CollectionView from './pages/CollectionView';
-import JobAnalysis from './pages/JobAnalysis';
-import UserProfile from './pages/UserProfile';
-import Login from './pages/Login';
-import CategoriesPage from './pages/Categories';
-import CategoryPage from './pages/Category';
+import CollectionView from '@/pages/CollectionView';
+import JobAnalysis from '@/pages/JobAnalysis';
+import UserProfile from '@/pages/UserProfile';
+import Login from '@/pages/Login';
+import CategoriesPage from '@/pages/Categories';
+import CategoryPage from '@/pages/Category';
+import Example from '@/pages/Example';
 
-import App from './App'; // optional homepage
+import App from '@/App'; // optional homepage
 
 const Router: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const Router: React.FC = () => {
         <Route path="login" element={<Login />} />
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="categories/:id" element={<CategoryPage />} />
+        <Route path="example" element={<Example />} />
       </Route>
     </Routes>
   );
