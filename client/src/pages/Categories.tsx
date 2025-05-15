@@ -1,4 +1,4 @@
-import type React from "react"
+// React is used implicitly for JSX
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
@@ -214,23 +214,29 @@ export default function CategoriesPage() {
                                             <DialogTitle>Create New Category</DialogTitle>
                                             <DialogDescription>Enter a name for your new category.</DialogDescription>
                                         </DialogHeader>
-                                        <div className="grid gap-4 py-4">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="name">Name</Label>
-                                                <Input
-                                                    id="name"
-                                                    value={newCategoryName}
-                                                    onChange={(e) => setNewCategoryName(e.target.value)}
-                                                    placeholder="Category name"
-                                                />
+                                        <form onSubmit={(e) => {
+                                            e.preventDefault();
+                                            handleCreateCategory();
+                                        }}>
+                                            <div className="grid gap-4 py-4">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="name">Name</Label>
+                                                    <Input
+                                                        id="name"
+                                                        value={newCategoryName}
+                                                        onChange={(e) => setNewCategoryName(e.target.value)}
+                                                        placeholder="Category name"
+                                                        autoFocus
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-                                        <DialogFooter>
-                                            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                                                Cancel
-                                            </Button>
-                                            <Button onClick={handleCreateCategory}>Create</Button>
-                                        </DialogFooter>
+                                            <DialogFooter>
+                                                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                                                    Cancel
+                                                </Button>
+                                                <Button type="submit">Create</Button>
+                                            </DialogFooter>
+                                        </form>
                                     </DialogContent>
                                 </Dialog>
                             </div>
@@ -323,23 +329,29 @@ export default function CategoriesPage() {
                                 <DialogTitle>Rename Category</DialogTitle>
                                 <DialogDescription>Enter a new name for this category.</DialogDescription>
                             </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="rename">Name</Label>
-                                    <Input
-                                        id="rename"
-                                        value={newName}
-                                        onChange={(e) => setNewName(e.target.value)}
-                                        placeholder="Category name"
-                                    />
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                handleRenameCategory();
+                            }}>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="rename">Name</Label>
+                                        <Input
+                                            id="rename"
+                                            value={newName}
+                                            onChange={(e) => setNewName(e.target.value)}
+                                            placeholder="Category name"
+                                            autoFocus
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsRenameDialogOpen(false)}>
-                                    Cancel
-                                </Button>
-                                <Button onClick={handleRenameCategory}>Save</Button>
-                            </DialogFooter>
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setIsRenameDialogOpen(false)}>
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit">Save</Button>
+                                </DialogFooter>
+                            </form>
                         </DialogContent>
                     </Dialog>
 
@@ -353,14 +365,19 @@ export default function CategoriesPage() {
                                     be moved to Uncategorized.
                                 </DialogDescription>
                             </DialogHeader>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsCategoryDeleteDialogOpen(false)}>
-                                    Cancel
-                                </Button>
-                                <Button variant="destructive" onClick={() => categoryToDelete && handleDeleteCategory(categoryToDelete.id)}>
-                                    Delete
-                                </Button>
-                            </DialogFooter>
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                categoryToDelete && handleDeleteCategory(categoryToDelete.id);
+                            }}>
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setIsCategoryDeleteDialogOpen(false)}>
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit" variant="destructive">
+                                        Delete
+                                    </Button>
+                                </DialogFooter>
+                            </form>
                         </DialogContent>
                     </Dialog>
                 </div>

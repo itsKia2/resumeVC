@@ -1,4 +1,4 @@
-import type React from "react"
+// React is used implicitly for JSX
 
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
@@ -349,33 +349,39 @@ export default function CategoryPage() {
             <DialogTitle>Move Resume</DialogTitle>
             <DialogDescription>Select a category to move "{resumeToMove?.name}" to.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <ScrollArea className="h-[200px]">
-              <div className="grid gap-2">
-                {categories
-                  .filter((cat: Category) => cat.id !== "all" && (resumeToMove ? cat.id !== resumeToMove.categoryId : true))
-                  .map((category: Category) => (
-                    <Button
-                      key={category.id}
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => {
-                        if (resumeToMove) {
-                          handleChangeCategory(resumeToMove.id, category.id)
-                        }
-                      }}
-                    >
-                      {category.name}
-                    </Button>
-                  ))}
-              </div>
-            </ScrollArea>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResumeToMove(null)}>
-              Cancel
-            </Button>
-          </DialogFooter>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            // We can't implement Enter to submit here since user needs to select a category first
+          }}>
+            <div className="grid gap-4 py-4">
+              <ScrollArea className="h-[200px]">
+                <div className="grid gap-2">
+                  {categories
+                    .filter((cat: Category) => cat.id !== "all" && (resumeToMove ? cat.id !== resumeToMove.categoryId : true))
+                    .map((category: Category) => (
+                      <Button
+                        key={category.id}
+                        variant="outline"
+                        className="justify-start"
+                        type="button"
+                        onClick={() => {
+                          if (resumeToMove) {
+                            handleChangeCategory(resumeToMove.id, category.id)
+                          }
+                        }}
+                      >
+                        {category.name}
+                      </Button>
+                    ))}
+                </div>
+              </ScrollArea>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setResumeToMove(null)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -387,18 +393,23 @@ export default function CategoryPage() {
               Are you sure you want to delete "{resumeToDelete?.name}"? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResumeToDelete(null)}>
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={() => resumeToDelete && handleDeleteResume(resumeToDelete.id)}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            resumeToDelete && handleDeleteResume(resumeToDelete.id);
+          }}>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setResumeToDelete(null)}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                variant="destructive" 
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -412,25 +423,32 @@ export default function CategoryPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="file">Resume File (PDF)</Label>
-              <Input id="file" type="file" accept="application/pdf" onChange={handleFileChange} />
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (file && !isUploading) {
+              handleUpload();
+            }
+          }}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="file">Resume File (PDF)</Label>
+                <Input id="file" type="file" accept="application/pdf" onChange={handleFileChange} />
+              </div>
+
+              {uploadResponse && (
+                <div className="p-2 bg-green-50 text-green-700 rounded-md text-sm">{uploadResponse}</div>
+              )}
             </div>
 
-            {uploadResponse && (
-              <div className="p-2 bg-green-50 text-green-700 rounded-md text-sm">{uploadResponse}</div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpload} disabled={!file || isUploading}>
-              {isUploading ? "Uploading..." : "Upload"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!file || isUploading}>
+                {isUploading ? "Uploading..." : "Upload"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
