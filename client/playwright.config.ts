@@ -7,12 +7,8 @@ import path from 'path';
 // Read the .env file and set the environment variables
 dotenv.config({ path: path.resolve(dirname(fileURLToPath(import.meta.url)), '.env') })
 
-// Set the port for the server
-const PORT = process.env.PLAYWRIGHT_TESTING_PORT || 5173
-
-// Set webServer.url and use.baseURL with the location of the WebServer
-// respecting the correct set port
-const baseURL = `http://localhost:${PORT}`
+// Set the URL for the server
+const baseURL = process.env.PLAYWRIGHT_TESTING_URL || "http://localhost:5173";
 
 export default defineConfig({
   // Look for tests in the "e2e" directory
@@ -21,7 +17,7 @@ export default defineConfig({
   retries: 1,
   // Run your local dev server before starting the tests.
   webServer: {
-    command: 'bun run dev', // Start frontend and backend servers using the root package.json's dev script
+    command: 'cd ../ && bun run dev', // Start frontend and backend servers using the root package.json's dev script
     // Base URL to use in actions like `await page.goto('/')`
     url: baseURL,
     // Set the timeout for the server to start
