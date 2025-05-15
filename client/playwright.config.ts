@@ -35,6 +35,8 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['global setup'],
     },
+    // Due to nature of live data testing, we can't run browser tests in parallel
+    /*
     {
       name: 'Desktop Firefox',
       use: { ...devices['Desktop Firefox'] },
@@ -45,6 +47,7 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
       dependencies: ['global setup'],
     },
+    */
   ],
   use: {
     // Base URL to use in actions like `await page.goto('/')`.
