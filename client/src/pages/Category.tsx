@@ -166,7 +166,7 @@ export default function CategoryPage() {
         name: resume.name,
         categoryId: resume.category_id,
         uploadDate: new Date(resume.date).toISOString().split('T')[0],
-        fileSize: "N/A",
+        fileSize: "", // Placeholder for file size
         link: resume.link
       }))
     : []
