@@ -39,3 +39,4 @@ uv.lock
 
 # Tests
 test-results/
+tsconfig.e2e.tsbuildinfo
