@@ -22,7 +22,7 @@ const UploadResume: React.FC = () => {
 
 		setIsLoading(true);
 		try {
-			const token = await user.id;
+			//const token = await user.id;
 
 			const response = await fetch("/api/resume-upload", {
 				method: "POST",
