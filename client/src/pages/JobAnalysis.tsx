@@ -15,9 +15,45 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 
+async function jobUploadFetcher(url: string, { arg }: { arg: string }) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ jobDescription: arg }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to upload job description");
+  }
+
+  return res.json();
+}
+
 export default function JobAnalysis() {
   const { user } = useUser();
   const [jobDesc, setJobDesc] = useState<string>("");
+
+  // NEW: SWR mutation hook
+  const {
+    trigger: uploadJobDesc,
+    isMutating,
+    error,
+  } = useSWRMutation("/api/job-description", jobUploadFetcher, {
+    onSuccess: () => {
+      setJobDesc(""); // clear input on success
+      alert("Job description uploaded successfully!");
+    },
+  });
+
+  const handleUpload = () => {
+    if (jobDesc.trim()) {
+      uploadJobDesc(jobDesc);
+    } else {
+      alert("Please paste a job description before uploading.");
+    }
+  };
 
   return (
     <>
@@ -45,11 +81,24 @@ export default function JobAnalysis() {
 
           <section className="mt-8">
             <h3 className="text-lg font-semibold mb-2">Paste Job Listing</h3>
-            <textarea
+            <Input
               className="w-full h-32 p-3 border rounded-md"
               placeholder="Paste job description here..."
+              value={jobDesc}
+              onChange={(e) => setJobDesc(e.target.value)}
             />
-            <Button className="mt-4">Find Best Resume Match</Button>
+            <Button
+              className="mt-4"
+              onClick={handleUpload}
+              disabled={isMutating}
+            >
+              {isMutating ? "Uploading..." : "Find Best Resume Match"}
+            </Button>
+            {error && (
+              <p className="text-red-500 mt-2">
+                Failed to upload job description. Please try again.
+              </p>
+            )}
           </section>
         </div>
       </SignedIn>

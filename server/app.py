@@ -533,5 +533,12 @@ def getResumeMatch():
         return {'error': 'User ID not found'}, 400
 
     data = request.get_json()
-    jobDesc = data.get('key')
-    print(jobDesc)
+    if not data or 'jobDescription' not in data:
+        return {'error': 'Missing jobDescription in request body'}, 400
+
+    job_description = data['jobDescription']
+    print(f"[JOB DESCRIPTION] from user {user_id}:\n{job_description}")
+
+    # openai here
+
+    return {'message': 'Job description received successfully'}, 200
