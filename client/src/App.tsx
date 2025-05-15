@@ -7,7 +7,7 @@ export default function App() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   return (
-    <main className="flex flex-col items-center justify-center p-6 gap-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white h-screen overflow-hidden">
+    <main className="flex flex-col items-center justify-center p-6 gap-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white min-h-screen min-w-full overflow-hidden">
       <h1 className="text-4xl font-extrabold drop-shadow-lg">Welcome to Resume Manager</h1>
       <p className="text-lg text-center max-w-lg">
         Organize your resumes and land your dream job with ease.
@@ -19,34 +19,31 @@ export default function App() {
         >
           Get Started
         </button>
-        {showDropdown && (
-          <div className="absolute top-full mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg">
-            <button
-              onClick={() => navigate("/collections")}
-              className="block w-full px-4 py-2 text-left hover:bg-gray-100 rounded-lg"
-            >
-              Go to Resume Collections
-            </button>
-            <button
-              onClick={() => navigate("/job-analysis")}
-              className="block w-full px-4 py-2 text-left hover:bg-gray-100 rounded-lg"
-            >
-              Go to Job Analysis
-            </button>
+          <div
+            className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg transition-all duration-300 ease-out ${
+              showDropdown ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"
+            }`}
+          >            
+          <button
+            onClick={() => {
+              navigate("/collections");
+              setShowDropdown(false);
+            }}
+            className="block w-full px-4 py-2 text-center hover:bg-blue-100 rounded-lg transition"
+          >
+            Resume Collections
+          </button>
+          <button
+            onClick={() => {
+              navigate("/job-analysis");
+              setShowDropdown(false);
+            }}
+            className="block w-full px-4 py-2 text-center hover:bg-blue-100 rounded-lg transition"
+          >
+            Job Analysis
+          </button>
           </div>
-        )}
       </div>
     </main>
   );
 }
-
-// export default function App() {
-//   return (
-//     <main className="flex flex-col items-center justify-center p-6 gap-6">
-//       <h1 className="text-2xl font-bold">Welcome to Resume Manager</h1>
-//       <p className="text-gray-700">
-//         Navigate using the menu above to manage your resumes and collections.
-//       </p>
-//     </main>
-//   );
-// }
