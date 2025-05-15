@@ -521,3 +521,24 @@ def move_resume(resume_id):
     except Exception as e:
         print(f"Error moving resume: {e}", file=sys.stderr)
         return {'error': str(e)}, 500
+
+@app.route('/api/job-description', methods=['POST'])
+def getResumeMatch():
+    request_state = authenticate_with_clerk(request)
+    if not request_state.is_signed_in:
+        return {'error': 'User not signed in'}, 401
+
+    user_id = request_state.payload.get('sub')
+    if not user_id:
+        return {'error': 'User ID not found'}, 400
+
+    data = request.get_json()
+    if not data or 'jobDescription' not in data:
+        return {'error': 'Missing jobDescription in request body'}, 400
+
+    job_description = data['jobDescription']
+    print(f"[JOB DESCRIPTION] from user {user_id}:\n{job_description}")
+
+    # openai here
+
+    return {'message': 'Job description received successfully'}, 200
