@@ -261,11 +261,15 @@ def categories_handler():
             count_by_category = {}
             
             # Ensure counts_response.data is a list before iterating, default to empty if not
+            uncategorized_count = 0
             if hasattr(counts_response, 'data') and isinstance(counts_response.data, list):
                 for item in counts_response.data:
                     # Ensure item is a dict and has the required keys
                     if isinstance(item, dict) and 'category_id' in item and 'count' in item:
-                        count_by_category[str(item['category_id'])] = item['count']
+                        if item['category_id'] is None:
+                            uncategorized_count = item['count']
+                        else:
+                            count_by_category[str(item['category_id'])] = item['count']
             elif hasattr(counts_response, 'error') and counts_response.error:
                 # If there was an error fetching counts, log it and continue with empty counts
                 print(f"Error fetching resume counts: {counts_response.error}", file=sys.stderr)
@@ -276,7 +280,8 @@ def categories_handler():
                     category['resumeCount'] = count_by_category.get(str(category['id']), 0)
                 
             # Count all resumes for this user (for "All Resumes" category)
-            all_resumes_count = sum(count_by_category.values())
+            # Include both categorized and uncategorized resumes
+            all_resumes_count = sum(count_by_category.values()) + uncategorized_count
             
             # Add "All" category
             categories.insert(0, {

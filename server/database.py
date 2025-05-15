@@ -71,11 +71,10 @@ def getResumesByCategory(user_id, category_id=None):
 def getResumesCount(user_id):
     """Get count of resumes grouped by category using Python-side aggregation."""
     try:
-        # Fetch all resumes for the user that have a category_id
+        # Fetch all resumes for the user, including those with null category_id
         resumes_response = supabase.table('resumes') \
             .select('id, category_id') \
             .eq('clerk_id', user_id) \
-            .not_.is_('category_id', None) \
             .execute()
 
         if hasattr(resumes_response, 'error') and resumes_response.error:
@@ -83,14 +82,23 @@ def getResumesCount(user_id):
             return MockSupabaseResponse(data=None, error=resumes_response.error)
 
         if not resumes_response.data:
-            return MockSupabaseResponse(data=[], error=None) # No resumes with categories
+            return MockSupabaseResponse(data=[], error=None) # No resumes at all
 
         # Aggregate counts in Python
         category_counts = {}
+        # Keep track of uncategorized resumes
+        uncategorized_count = 0
+        
         for resume in resumes_response.data:
             cat_id = resume.get('category_id')
-            if cat_id is not None: # Should be true due to the query filter
+            if cat_id is not None:
                 category_counts[cat_id] = category_counts.get(cat_id, 0) + 1
+            else:
+                uncategorized_count += 1
+                
+        # Add uncategorized count as a special entry with None as the key (surprisingly this works)
+        if uncategorized_count > 0:
+            category_counts[None] = uncategorized_count
         
         # Format the output to be similar to what the direct query might have returned
         # [{ 'category_id': id, 'count': num }, ...]
