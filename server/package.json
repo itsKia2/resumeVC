@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "uv run flask --app app run --debug",
         "build": "uv sync --no-dev",
-        "clean": "uv clean && rm -rf .venv __pycache__"
+        "clean": "uv clean && rm -rf .venv __pycache__",
+        "test": ""
     }
 }

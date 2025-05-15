@@ -1,0 +1,4 @@
+[test]
+environment = "happy-dom"
+preload = ["./happydom.ts", "./testing-library.ts"]
+root = "test"
