@@ -7,7 +7,7 @@ export default function App() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   return (
-    <main className="flex flex-col items-center justify-center p-6 gap-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white min-h-screen min-w-full overflow-hidden">
+    <main className="flex flex-col items-center justify-center p-6 gap-6 bg-gradient-to-r from-gray-800 to-gray-900 text-white min-h-screen min-w-full overflow-hidden">
       <h1 className="text-4xl font-extrabold drop-shadow-lg">Welcome to Resume Manager</h1>
       <p className="text-lg text-center max-w-lg">
         Organize your resumes and land your dream job with ease.
@@ -31,7 +31,7 @@ export default function App() {
             }}
             className="block w-full px-4 py-2 text-center hover:bg-blue-100 rounded-lg transition"
           >
-            Resume Collections
+            Resume Categories
           </button>
           <button
             onClick={() => {
