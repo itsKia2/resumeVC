@@ -15,25 +15,33 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 
-async function jobUploadFetcher(url: string, { arg }: { arg: string }) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ jobDescription: arg }),
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to upload job description");
-  }
-
-  return res.json();
-}
-
 export default function JobAnalysis() {
   const { user } = useUser();
   const [jobDesc, setJobDesc] = useState<string>("");
+  const [resumeNames, setResumeNames] = useState<[]>([]);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+
+  async function jobUploadFetcher(url: string, { arg }: { arg: string }) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ jobDescription: arg }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to upload job description");
+    }
+
+    const data = await res.json();
+    if (res.ok) {
+      setAnalysisResult(data.analysis);
+      /* setAnalysisResult("SUCCESS"); */
+    } else {
+      setAnalysisResult("Something went wrong. Please try again.");
+    }
+  }
 
   // NEW: SWR mutation hook
   const {
@@ -62,22 +70,7 @@ export default function JobAnalysis() {
       </SignedOut>
       <SignedIn>
         <div className="p-8">
-          <h2 className="text-2xl font-bold mb-4">
-            Resume Timeline & Job Matching
-          </h2>
-
-          <section className="mb-6">
-            <h3 className="text-lg font-semibold">Revision History</h3>
-            <div className="mt-2 space-y-2">
-              {/* Replace with dynamic content */}
-              <div className="p-4 border rounded-md shadow-sm bg-white">
-                Initial Draft - Jan 2024
-              </div>
-              <div className="p-4 border rounded-md shadow-sm bg-white">
-                Tailored for SWE - Feb 2024
-              </div>
-            </div>
-          </section>
+          <h2 className="text-2xl font-bold mb-4">Resume Job Matching</h2>
 
           <section className="mt-8">
             <h3 className="text-lg font-semibold mb-2">Paste Job Listing</h3>
@@ -92,8 +85,17 @@ export default function JobAnalysis() {
               onClick={handleUpload}
               disabled={isMutating}
             >
-              {isMutating ? "Uploading..." : "Find Best Resume Match"}
+              {isMutating ? "Uploading..." : "Analyze"}
             </Button>
+
+            {/* This is where the response of AI will be shown*/}
+            {analysisResult && (
+              <div className="mt-6 p-4 border rounded-md bg-gray-50 whitespace-pre-wrap">
+                <h4 className="font-semibold mb-2">Analysis:</h4>
+                {analysisResult}
+              </div>
+            )}
+
             {error && (
               <p className="text-red-500 mt-2">
                 Failed to upload job description. Please try again.

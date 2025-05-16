@@ -547,7 +547,8 @@ def getResumeMatch():
     allPdfTexts = []
     for resume in allResumes:
         allPdfTexts.append(readPdf(resume.get('link')))
-    reply = compareResumeJobDesc(job_description, allPdfTexts[0])
-    print(reply.response)
+    result, status = compareResumeJobDesc(job_description, allPdfTexts[0])
+    reply = result['response']
+    # print(reply.response)
 
-    return {'analysis': reply.response}, 200
+    return {'analysis': reply}, 200
