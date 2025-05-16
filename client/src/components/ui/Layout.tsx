@@ -12,15 +12,15 @@ const Layout: React.FC = () => {
           Resume Manager
         </Link>
         <nav className="flex gap-4 items-center">
-          <Link to="/collections" className="text-blue-600 hover:underline">Resume Collections</Link>
-          <Link to="/job-analysis" className="text-blue-600 hover:underline">Job Analysis</Link>
-          <Link to="/profile" className="text-blue-600 hover:underline">Profile</Link>
           <SignedOut>
             <SignInButton mode="modal">
               <Button variant="outline">Sign In</Button>
             </SignInButton>
           </SignedOut>
           <SignedIn>
+            <Link to="/categories" className="text-blue-600 hover:underline">Resumes</Link>
+            <Link to="/job-analysis" className="text-blue-600 hover:underline">Job Analysis</Link>
+            <Link to="/profile" className="text-blue-600 hover:underline">Profile</Link>
             <UserButton />
           </SignedIn>
         </nav>

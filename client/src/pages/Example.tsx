@@ -35,7 +35,7 @@ const Example: React.FC = () => {
         await user.reload();
 
         // Redirect to force the onboarding flow to trigger
-        window.location.href = "/";
+        window.location.href = "/example";
       } else {
         const errorData = await response.json();
         alert(`Failed to update onboardingComplete: ${errorData.error}`);

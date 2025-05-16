@@ -36,3 +36,7 @@ __pycache__/
 .lock-recipe
 .lock
 uv.lock
+
+# Tests
+test-results/
+tsconfig.e2e.tsbuildinfo

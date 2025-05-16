@@ -1,5 +1,5 @@
-import { SignedIn, SignedOut, SignInButton, UserProfile as ClerkUserProfile } from "@clerk/clerk-react";
-import { Button } from "@/components/ui/button";
+import { SignedIn, SignedOut, UserProfile as ClerkUserProfile } from "@clerk/clerk-react";
+import { SignInAlert } from "@/components/ui/SignInAlert";
 
 const UserProfile = () => {
   return (
@@ -9,12 +9,7 @@ const UserProfile = () => {
       </SignedIn>
 
       <SignedOut>
-        <div className="flex flex-col items-center justify-center mt-10">
-          <p className="mb-4 text-lg">Please sign in to view your profile.</p>
-          <SignInButton mode="modal">
-            <Button variant="default">Sign In</Button>
-          </SignInButton>
-        </div>
+        <SignInAlert />
       </SignedOut>
     </div>
   );

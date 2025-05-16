@@ -8,13 +8,15 @@
       "client:build": "cd client && bun run build",
       "client:install": "cd client && bun install",
       "client:clean": "cd client && bun run clean",
+      "client:test": "cd client && bun run test",
       "server:dev": "cd server && bun run dev",
       "server:build": "cd server && bun run build",
       "server:clean": "cd server && bun run clean",
       "dev": "concurrently \"bun run client:dev\" \"bun run server:dev\"",
       "build": "bun run client:build && bun run server:build",
       "postinstall": "bun run client:install",
-      "clean": "bun run client:clean && bun run server:clean"
+      "clean": "bun run client:clean && bun run server:clean",
+      "test": "bun run client:test"
     },
     "devDependencies": {
       "concurrently": "^8.2.2"
