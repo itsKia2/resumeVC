@@ -68,6 +68,31 @@ def getResumesByCategory(user_id, category_id=None):
     response = query.execute()
     return response
 
+def getResumesForUser(user_id):
+    try:
+        # Fetch all resumes for the user, including those with null category_id
+        resumes_response = supabase.table('resumes') \
+            .select('*') \
+            .eq('clerk_id', user_id) \
+            .execute()
+
+        if hasattr(resumes_response, 'error') and resumes_response.error:
+            # Propagate Supabase error if one occurs
+            return MockSupabaseResponse(data=None, error=resumes_response.error)
+
+        if not resumes_response.data:
+            return MockSupabaseResponse(data=[], error=None) # No resumes at all
+
+        resumeList = []
+        for resume in resumes_response.data:
+            resumeList.append(resume)
+
+        return resumeList
+    except Exception as e:
+        print(f"Error in getResumesForUser (Python-side aggregation): {e}", file=sys.stderr)
+        error_details = {'message': str(e), 'details': 'Python-side aggregation failed'}
+        return MockSupabaseResponse(data=None, error=error_details)
+
 def getResumesCount(user_id):
     """Get count of resumes grouped by category using Python-side aggregation."""
     try:

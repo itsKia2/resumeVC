@@ -7,17 +7,18 @@ from supabase import create_client, Client
 from clerk_backend_api import Clerk
 from clerk_backend_api.jwks_helpers import AuthenticateRequestOptions
 from flask_cors import CORS
+from io import BufferedReader
 
 # Import supabase instance along with other db functions
 from database import (
-    supabase, createUser, deleteUser, getUsers, uploadFile, 
+    MockSupabaseResponse, supabase, createUser, deleteUser, getUsers, uploadFile,
     getCategories, getResumesByCategory, getResumesCount, 
-    createCategory, updateCategory, deleteCategory,
-    # New functions
-    updateUserInDB, getResumeByIdAndUser, deleteResumeFileFromStorage, 
+    createCategory, updateCategory, deleteCategory, getResumesForUser,
+    updateUserInDB, getResumeByIdAndUser, deleteResumeFileFromStorage,
     deleteResumeFromDB, getCategoryByIdAndUser, moveResumeToCategoryInDB
 )
-from io import BufferedReader
+
+from jobmatch import compareResumeJobDesc, readPdf
 
 UPLOAD_FOLDER = '/tmp/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -540,5 +541,13 @@ def getResumeMatch():
     print(f"[JOB DESCRIPTION] from user {user_id}:\n{job_description}")
 
     # openai here
+    allResumes = getResumesForUser(user_id)
+    if isinstance(allResumes, MockSupabaseResponse):
+        return {'error': 'Resumes not being returned properly'}, 412
+    allPdfTexts = []
+    for resume in allResumes:
+        allPdfTexts.append(readPdf(resume.get('link')))
+    reply = compareResumeJobDesc(job_description, allPdfTexts[0])
+    print(reply.response)
 
-    return {'message': 'Job description received successfully'}, 200
+    return {'analysis': reply.response}, 200
