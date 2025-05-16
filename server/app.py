@@ -7,17 +7,18 @@ from supabase import create_client, Client
 from clerk_backend_api import Clerk
 from clerk_backend_api.jwks_helpers import AuthenticateRequestOptions
 from flask_cors import CORS
+from io import BufferedReader
 
 # Import supabase instance along with other db functions
 from database import (
-    supabase, createUser, deleteUser, getUsers, uploadFile, 
+    MockSupabaseResponse, supabase, createUser, deleteUser, getUsers, uploadFile,
     getCategories, getResumesByCategory, getResumesCount, 
-    createCategory, updateCategory, deleteCategory,
-    # New functions
-    updateUserInDB, getResumeByIdAndUser, deleteResumeFileFromStorage, 
+    createCategory, updateCategory, deleteCategory, getResumesForUser,
+    updateUserInDB, getResumeByIdAndUser, deleteResumeFileFromStorage,
     deleteResumeFromDB, getCategoryByIdAndUser, moveResumeToCategoryInDB
 )
-from io import BufferedReader
+
+from jobmatch import compareResumeJobDesc, readPdf
 
 UPLOAD_FOLDER = '/tmp/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -521,3 +522,32 @@ def move_resume(resume_id):
     except Exception as e:
         print(f"Error moving resume: {e}", file=sys.stderr)
         return {'error': str(e)}, 500
+
+@app.route('/api/job-description', methods=['POST'])
+def getResumeMatch():
+    request_state = authenticate_with_clerk(request)
+    if not request_state.is_signed_in:
+        return {'error': 'User not signed in'}, 401
+
+    user_id = request_state.payload.get('sub')
+    if not user_id:
+        return {'error': 'User ID not found'}, 400
+
+    data = request.get_json()
+    if not data or 'jobDescription' not in data:
+        return {'error': 'Missing jobDescription in request body'}, 400
+
+    job_description = data['jobDescription']
+    print(f"[JOB DESCRIPTION] from user {user_id}:\n{job_description}")
+
+    # openai here
+    allResumes = getResumesForUser(user_id)
+    if isinstance(allResumes, MockSupabaseResponse):
+        return {'error': 'Resumes not being returned properly'}, 412
+    allPdfTexts = []
+    for resume in allResumes:
+        allPdfTexts.append(readPdf(resume.get('link')))
+    reply = compareResumeJobDesc(job_description, allPdfTexts[0])
+    print(reply.response)
+
+    return {'analysis': reply.response}, 200
