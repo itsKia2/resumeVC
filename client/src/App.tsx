@@ -26,7 +26,7 @@ export default function App() {
           >            
           <button
             onClick={() => {
-              navigate("/collections");
+              navigate("/categories");
               setShowDropdown(false);
             }}
             className="block w-full px-4 py-2 text-center hover:bg-blue-100 rounded-lg transition"
