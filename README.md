@@ -14,8 +14,10 @@ The intended audience is any job seeker that uses a resume when applying for job
 * Aryan Pothanaboyina
 
 ## How to Setup
-1. Ensure you have [uv](https://docs.astral.sh/uv/getting-started/installation/) and [bun](https://bun.sh/) installed
-2. In the root project directory, run `bun i` then `bun dev`
-3. Visit the Vite server (http://localhost:5173)
+1. Ensure you have [uv](https://docs.astral.sh/uv/getting-started/installation/) and [bun](https://bun.sh/) installed.
+2. Ensure you have the `client/.env` and `server/.env` files set up.
+3. In the root project directory, run `bun i` then `bun dev`.
+4. Visit the Vite server (http://localhost:5173).
+5. To run the Playwright tests, ensure the dev server isn't running and run `bun run test`.
 
-The Vite server is preferable as it shows automatic updates in client and server code. The Flask server (http://127.0.0.1:5000) only does so for server code and requires the client to be built beforehand. See the root `package.json` for other scripts
+The Vite server is preferable as it shows automatic updates in client and server code. The Flask server (http://127.0.0.1:5000) only does so for server code and requires the client to be built beforehand with `bun run client:build`. See the root `package.json` for other scripts.
