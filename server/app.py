@@ -523,6 +523,30 @@ def move_resume(resume_id):
         print(f"Error moving resume: {e}", file=sys.stderr)
         return {'error': str(e)}, 500
 
+@app.route('/api/get-user-resume-names', methods=['GET'])
+def getUserResumeNames():
+    request_state = authenticate_with_clerk(request)
+    if not request_state.is_signed_in:
+        return {'error': 'User not signed in'}, 401
+
+    user_id = request_state.payload.get('sub')
+    if not user_id:
+        return {'error': 'User ID not found'}, 400
+
+    allResumes = getResumesForUser(user_id)
+    if isinstance(allResumes, MockSupabaseResponse):
+        return {'error': 'Resumes not returned properly'}, 412
+
+    # Extract resume names (you might need to adjust this depending on your data structure)
+    resumes = []
+    for r in allResumes:
+        resumes.append({
+            'name': r.get('name'),
+            'link': r.get('link'),
+        })
+
+    return {'resumes': resumes}, 200
+
 @app.route('/api/job-description', methods=['POST'])
 def getResumeMatch():
     request_state = authenticate_with_clerk(request)
@@ -534,20 +558,20 @@ def getResumeMatch():
         return {'error': 'User ID not found'}, 400
 
     data = request.get_json()
-    if not data or 'jobDescription' not in data:
-        return {'error': 'Missing jobDescription in request body'}, 400
+    resumeLink = data.get('resumeLink')
 
     job_description = data['jobDescription']
-    print(f"[JOB DESCRIPTION] from user {user_id}:\n{job_description}")
+    # print(f"[JOB DESCRIPTION] from user {user_id}:\n{job_description}")
 
-    # openai here
-    allResumes = getResumesForUser(user_id)
-    if isinstance(allResumes, MockSupabaseResponse):
-        return {'error': 'Resumes not being returned properly'}, 412
-    allPdfTexts = []
-    for resume in allResumes:
-        allPdfTexts.append(readPdf(resume.get('link')))
-    result, status = compareResumeJobDesc(job_description, allPdfTexts[0])
+    # WE ARE NOT READING ALL RESUMES ANYMORE, WE JUST WANT THE SPECIFIC ONE
+    # allResumes = getResumesForUser(user_id)
+    # if isinstance(allResumes, MockSupabaseResponse):
+    #     return {'error': 'Resumes not being returned properly'}, 412
+    # allPdfTexts = []
+    # for resume in allResumes:
+    #     allPdfTexts.append(readPdf(resume.get('link')))
+
+    result, status = compareResumeJobDesc(job_description, readPdf(resumeLink))
     reply = result['response']
     # print(reply.response)
 
